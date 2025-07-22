@@ -11,7 +11,7 @@ from langchain_core.document_loaders import BaseLoader
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain.prompts import PromptTemplate
 import langchain_core.output_parsers as parsers
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -109,7 +109,8 @@ class PortfolioAssistant:
         if "embedding_model" not in self.config:
             msg = "Отсутствует название модели для эмбеддингов"
             self._raise_error(msg)
-        self.embedding = HuggingFaceEmbeddings(self.config["embedding_model"])
+        self.embedding = HuggingFaceEmbeddings(
+            model_name=self.config["embedding_model"])
 
         # Загрузка базы ChromaDB
         if os.path.exists(self.chroma_dir):
@@ -147,6 +148,10 @@ class PortfolioAssistant:
             search_kwargs=self.config.get("search_kwargs", {"k": 15})
         )
         
+        # Создание модели LLM
+        if not os.environ.get("GOOGLE_API_KEY"):
+            msg = "Отсутствует переменная окружения 'GOOGLE_API_KEY'"
+            self._raise_error(msg)
         if "llm_model" not in self.config:
             msg = "Отсутствует название LLM модели"
             self._raise_error(msg)
@@ -346,7 +351,8 @@ class PortfolioAssistant:
             return [], []
 
         # Обработка файлов из хранилища документов
-        logging.info(f"Найдено {len(target_files)} файлов. Начинаем обработку")
+        logging.info(
+            f"Найдено {len(target_files)} файлов. Начинается обработка.")
         for file_path in target_files:
             try:
                 # Получение загрузчика по расширению
