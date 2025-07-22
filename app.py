@@ -131,7 +131,7 @@ class PortfolioAssistant:
                 chunk_size=self.config.get("chunk_size", 1000),
                 chunk_overlap=self.config.get("chunk_overlap", 200)
             )
-            chunks = text_splitter.split_documents(self.project_docs)
+            chunks = text_splitter.split_documents(project_docs)
             logging.info(f"Документы разделены на {len(chunks)} чанков. "
                          "Индексация и создание базы ChromaDB...")
             self.vector_store = Chroma.from_documents(
