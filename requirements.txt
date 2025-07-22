@@ -1,0 +1,12 @@
+chromadb==1.0.15
+google-ai-generativelanguage==0.6.15
+gradio==5.37.0
+jq==1.10.0
+langchain==0.3.26
+langchain-chroma==0.2.4
+langchain-community==0.3.27
+langchain-google-genai==2.0.10
+langchain-huggingface==0.3.0
+langchain-unstructured==0.1.6
+sentence-transformers==4.1.0
+unstructured==0.18.9

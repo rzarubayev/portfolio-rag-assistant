@@ -1,0 +1,171 @@
+# Основные данные по репозиторию
+owner: rzarubayev
+repo: machine-learning-portfolio
+branch: main
+# Директории для данных
+data_dir: data
+chroma_dir: chroma
+# Загрузчики
+loaders: 
+  .ipynb: langchain_community.document_loaders.NotebookLoader
+  .md: langchain_community.document_loaders.UnstructuredMarkdownLoader
+  .py: langchain_community.document_loaders.PythonLoader
+  .txt: langchain_community.document_loaders.TextLoader
+  .sh: langchain_community.document_loaders.TextLoader
+  .yaml: langchain_unstructured.document_loaders.UnstructuredLoader
+  .yml: langchain_unstructured.document_loaders.UnstructuredLoader
+  .json: langchain_community.document_loaders.JSONLoader
+# Настройки загрузчиков
+loader_params:
+  NotebookLoader: 
+    include_outputs: False
+    remove_newline: True
+  TextLoader: 
+    encoding: utf8
+  JSONLoader:
+    jq_schema: "."
+    text_content: False
+# Настройки разделения на чанки
+chunk_size: 1000
+chunk_overlap: 200
+# Настройки ретривера
+search_type: similarity
+search_kwargs:
+  k: 15
+# Модели
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+llm_model: gemini-2.5-flash
+# Лимиты для контекста
+context_len: 100000
+context_ratio: 2.5
+# Шаблоны промптов
+history_prompt:
+  template: >
+    Твоя задача — проанализировать историю диалога и новый вопрос пользователя,
+    а затем создать краткую и самодостаточную сводку.
+    Эта сводка будет использована для подготовки ответа другой AI модели.
+
+
+    Внимательно изучи историю и вопрос. Затем сделай ОДНО из двух:
+
+    1. **Переформулируй вопрос:** если новый вопрос пользователя зависит от
+    контекста (например, содержит ссылку на предыдущий вопрос или ответ,
+    со словами: "это", "там", "а в нем" и аналогичные), перепиши его так,
+    чтобы он был понятен без истории чата как контекст для модели.
+
+    2. **Создай резюме:** если переформулировать вопрос сложно,
+    напиши очень короткое (2-3 предложения) ключевой информации из истории,
+    необходимой для ответа на новый вопрос.
+    В конце добавь новый вопрос пользователя.
+
+
+    История переписки:
+
+    {chat_history}
+
+
+    Новый вопрос:
+    {question}
+
+
+    Сжатый контекст:
+
+  input_variables:
+    - chat_history
+    - question
+  output_parser: StrOutputParser
+
+research_prompt:
+  template: >
+    Ты умный AI-исследователь. Твоя задача - помочь ответить на вопрос пользователя.
+    Ниже представлены общие сведения по проектам и владельце портфолио, сам вопрос,
+    несколько релевантных фрагментов, найденных в базе знаний и полный список всех
+    доступных файлов проектов.
+
+    Проанализируй эту информацию и реши, какие файлы из полного списка нужно
+    прочитать ЦЕЛИКОМ, чтобы дать наиболее полный и точный ответ.
+    Учитывай и те файлы, из которых взяты фаргменты, и любые другие,
+    которые кажутся тебе релевантными. Не добавляй файлы, которые не считаешь
+    релевантными. Составь список по уменьшению релевантности.
+
+    Твой ответ должен быть ТОЛЬКО списком путей к файлам в формате чистого JSON.
+    Никаких лишних слов и кавычек.
+    Если не найдешь ничего подходящего, верни пустой список - []
+
+
+    --- Общая информация о проектах и владельце портфолио ---
+
+    {general_context}
+
+
+    --- Вопрос пользователя ---
+
+    {question}
+
+
+    --- Найденные фрагменты (подсказки) ---
+
+    {retrieved_chunks}
+
+
+    --- Список всех доступных файлов ---
+
+    {all_files}
+
+
+    --- Ответ в формате JSON ---
+
+  input_variables:
+    - general_context
+    - question
+    - retrieved_chunks
+    - all_files
+  output_parser: JsonOutputParser
+
+answer_prompt:
+  template: >
+    Ты - AI-ассистент, который помогает узнать о проектах и опыте Зарубаева Руслана.
+    Отвечай на вопрос пользователя, опираясь на ВОПРОС С КОНТЕКСТОМ,
+    ОБЩИЙ КОНТЕКСТ и на КОНТЕКСТ ПО ВОПРОСУ.
+
+
+    Правила ответа:
+
+    1. Если вопрос не касается проектов, опыта или компетенций Руслана,
+    вежливо сообщи, что можешь отвечать только на вопросы,
+    связанные с его портфолио;
+
+    2. Если в предоставленном контексте нет информации для ответа на вопрос,
+    честно сообщи об этом;
+
+    3. Не придумывай информацию.
+
+
+    --- ВОПРОС С КОНТЕКСТОМ ---
+
+    {question}
+
+    --- КОНЕЦ ВОПРОСА С КОНТЕКСТОМ ---
+
+
+    --- ОБЩИЙ КОНТЕКСТ (информация о Руслане и его проектах в портфолио) ---
+
+    {general_context}
+
+    --- КОНЕЦ ОБЩЕГО КОНТЕКСТА ---
+
+
+    --- КОНТЕКСТ ПО ВОПРОСУ (содержимое рекомендованных файлов) ---
+
+    {specific_content}
+
+    --- КОНЕЦ КОНТЕКСТА ПО ВОПРОСУ ---
+
+
+    Ответ:
+
+  input_variables:
+    - question
+    - general_context
+    - specific_content
+  output_parser: StrOutputParser
