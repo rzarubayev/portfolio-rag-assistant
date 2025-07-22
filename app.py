@@ -11,7 +11,7 @@ from langchain_core.document_loaders import BaseLoader
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 import langchain_core.output_parsers as parsers
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -24,7 +24,7 @@ logging.basicConfig(
 )
 
 class PortfolioAssistant:
-    def __init__(self, config_file="config.yaml", reload=False):
+    def __init__(self, config_file="config.yaml"):
         """
         Класс PortfolioAssistant  
         """
@@ -62,13 +62,11 @@ class PortfolioAssistant:
         # загрузка хранилища документов
         self.data_dir = self.config.get("data_dir", "data")
         self.chroma_dir = self.config.get("chroma_dir", "chroma")
-        # Перезагрузка файлов репозитория, если установлен параметр
-        if reload:
-            self._download_repo_files()
         # Проверка наличия папки с документами для загрузки
         if not os.path.exists(self.data_dir):
-            msg = "Отсутствуют документы для загрузки"
-            self._raise_error(msg)
+            logging.warning("Отсутствует директория с документами, "
+                            "данные будут загружены из репозитория GitHub")
+            self._download_repo_files()
         general_docs, project_docs = self._load_documents()
 
         # Создание общего контекста
