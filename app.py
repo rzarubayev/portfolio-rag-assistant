@@ -16,7 +16,10 @@ from langchain.prompts import PromptTemplate
 import langchain_core.output_parsers as parsers
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+# Изменение уровня логирования для unstructured
+logging.getLogger("unstructured").setLevel(logging.ERROR)
 
+# Базовый конфиг для логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -24,10 +27,28 @@ logging.basicConfig(
 )
 
 class PortfolioAssistant:
+    """
+    AI-ассистент на базе RAG для ответов на вопросы по GitHub-портфолио.
+
+    Этот класс представляет собой полноценную систему, которая загружает
+    документы из репозитория, индексирует их в векторной базе данных
+    и использует языковую модель для генерации ответов на основе
+    найденной информации. Управляется через конфигурационный файл.
+    """
+
     def __init__(self, config_file="config.yaml"):
         """
-        Класс PortfolioAssistant  
+        Инициализирует экземпляр ассистента по портфолио.
+
+        Этот метод выполняет полную настройку ассистента:
+        1.  Загружает и валидирует конфигурационный файл `config.yaml`.
+        2.  Динамически импортирует классы загрузчиков документов (loaders).
+        3.  При необходимости скачивает файлы из GitHub-репозитория.
+        4.  Загружает документы из локальной директории.
+        5.  Инициализирует модель эмбеддингов и векторную базу ChromaDB.
+        6.  Загружает LLM и создает цепочки (chains) для обработки запросов.
         """
+
         logging.info("Загрузка конфигурации...")
         if not os.path.exists(config_file):
             msg = "Файл конфигурации отсутствует, инициализация невозможна"
@@ -48,9 +69,8 @@ class PortfolioAssistant:
             msg = "Список загрузчиков пуст"
         if msg:
             self._raise_error(msg)
-            
         self.loaders, self.loader_params = {}, {}
-        # Динамическое импортирвоание библиотек и загрузка классов
+        # Динамический импорт библиотек и загрузка классов
         for k, v in self.config["loaders"].items():
             self.loaders[k] = self._import_loader(v)
         if not isinstance(self.config["loader_params"], dict):

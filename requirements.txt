@@ -8,5 +8,6 @@ langchain-community==0.3.27
 langchain-google-genai==2.0.10
 langchain-huggingface==0.3.0
 langchain-unstructured==0.1.6
+Markdown==3.8.2
 sentence-transformers==4.1.0
 unstructured==0.18.9
