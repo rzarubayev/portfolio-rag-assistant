@@ -159,8 +159,7 @@ class PortfolioAssistant:
             self.llm = ChatGoogleGenerativeAI(
                 model=self.config["llm_model"]
             )
-            logging.info(f"Модель '{self.llm.model}' загружена, "
-                         "убедитесь в наличии API ключа в окружении.")
+            logging.info(f"Модель '{self.llm.model}' загружена.")
         except Exception as e:
             msg = ("Возникла ошибка при загрузке модели "
                    f"'{self.llm.model}': {e}")
@@ -224,7 +223,7 @@ class PortfolioAssistant:
             self._raise_error(msg)
 
         # Создание цепочек для промптов
-        self.chains = {}
+        self.chains, self.inputs = {}, {}
         for prompt in prompts:
             current_prompt = self.config[prompt]
             prompt_template = PromptTemplate(
@@ -234,6 +233,7 @@ class PortfolioAssistant:
             parser_class = getattr(parsers, current_prompt["output_parser"])
             ch_name = prompt.replace("prompt", "chain")
             self.chains[ch_name] = prompt_template | self.llm | parser_class()
+            self.inputs[ch_name] = current_prompt["input_variables"]
         
         logging.info("Экземпляр класса PortfolioAssistant создан!")
 
@@ -436,8 +436,7 @@ class PortfolioAssistant:
         Принимает название цепочки и словарь с параметрами.
         """
         try:
-            input_keys = self.chains[chain].input_variables()
-            params = {key: prompt_inputs[key] for key in input_keys}
+            params = {key: prompt_inputs[key] for key in self.inputs[chain]}
             return self.chains[chain].invoke(params)
         except Exception as e:
             logging.error(
