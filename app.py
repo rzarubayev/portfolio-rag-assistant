@@ -471,7 +471,7 @@ class PortfolioAssistant:
         # Добавление основного контекста, фрагментов и списка файлов
         inputs["general_context"] = self.general_context
 
-        retrieved_chunks = self.retriever(inputs["question"])
+        retrieved_chunks = self.retriever.invoke(inputs["question"])
         inputs["retrieved_chunks"] = "\n\n".join(
             [doc.page_content for doc in retrieved_chunks]
         )
